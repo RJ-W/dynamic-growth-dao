@@ -1,0 +1,41 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ninterface AggregatorV3Interface {\n  function decimals() external view returns (uint8);\n\n  function description() external view returns (string memory);\n\n  function version() external view returns (uint256);\n\n  function getRoundData(uint80 _roundId)\n    external\n    view\n    returns (\n      uint80 roundId,\n      int256 answer,\n      uint256 startedAt,\n      uint256 updatedAt,\n      uint80 answeredInRound\n    );\n\n  function latestRoundData()\n    external\n    view\n    returns (\n      uint80 roundId,\n      int256 answer,\n      uint256 startedAt,\n      uint256 updatedAt,\n      uint80 answeredInRound\n    );\n}\n"
+    },
+    "contracts/growthGame.sol": {
+      "content": "// SPDX-License-Identifier: MIT\n\n// 1.Pragma\npragma solidity ^0.8.9;\n\n// 2.Imports\nimport \"@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol\";\n\n// 3.Interfaces\n// 4.Libraries\n\n// Errors contractName__errorName\nerror GrowthGame__NotOwner();\n\n// 5.Contracts\n/** \n * @title growthGame Contract\n * @author RJ-W\n * @notice This contract is for finding out prophets from wizards through continuous predict game\n * @dev This price feeds from Chainlink\n */\ncontract growthGame {\n\n\t// 5.1 Type Declarations\n\t// 5.2 State variables\n\taddress private immutable i_owner;\n\taddress[] private s_wizards;\n\taddress[] private s_prophets;\n\n\tuint256 private s_currentPrice;\n\tmapping(address => int256) private s_addressToPrediction;\n\tmapping(address => uint256) private s_addressToIntegration;\n\tAggregatorV3Interface private s_priceFeed;\n\n\t// 5.3 Events\n\t// 5.4 Errors\n\t// 5.5 Modifiers\n\tmodifier onlyOwner() {\n\t\t// 🐷 require(msg.sender == i_owner);\n\t\tif (msg.sender != i_owner) revert GrowthGame__NotOwner();\n\t\t_;\n\t}\n\n\t// 5.6 Functions: constructor, receive, fallback, external, public, internal, private, view/pure\n\tconstructor(address priceFeedAddress) {\n\t\ts_priceFeed = AggregatorV3Interface(priceFeedAddress);\n\t\ti_owner = msg.sender;\n\n\t\t// 🐷 init currentPrice\n\t\ts_currentPrice = getCurrentPrice(s_priceFeed);\n\t}\n\n\treceive() external payable {\n\t\tpredict(0);\n\t}\n\n\tfallback() external payable {\n\t\tpredict(0);\n\t}\n\n\t/** \n\t * @notice wizards predict the uplift of successor exchange rate between ETH and USD\n\t * @dev init or update one's prediction\n\t */\n\tfunction predict(int256 uplift) public {\n\t\ts_addressToPrediction[msg.sender] = uplift;\n\t\ts_wizards.push(msg.sender);\n\t}\n\n\t/** \n\t * @notice owner operate the game\n\t * @dev get the latest price, verify all prediction, and record\n\t */\n\tfunction verify() public onlyOwner {\n\t\tuint256 latestPrice = getCurrentPrice(s_priceFeed);\n\t\tint256 realUplift = int256(latestPrice - s_currentPrice);\n\n\t\tfor (uint256 index = 0; index < s_wizards.length; index++) {\n\t\t\taddress wizard = s_wizards[index];\n\n\t\t\tuint256 diff = uint256(s_addressToPrediction[wizard] - realUplift);\n\t\t\ts_addressToIntegration[wizard] += (1 / diff);\n\n\t\t\ts_addressToPrediction[wizard] = 0;\n\t\t}\n\n\t\ts_wizards = new address[](0);\n\t}\n\n\t/** \n\t * @notice prophets will stand out based on the integration records\n\t * @dev elect prophets from wizards based on integration records\n\t */\n\n\n\tfunction getCurrentPrice(AggregatorV3Interface priceFeed) internal view returns (uint256) {\n\t\t(, int256 answer, , , ) = priceFeed.latestRoundData();\n\t\treturn uint256(answer);\n\t}\n\n\tfunction getPrediction() public view returns (int256) {\n\t\tint256 prediction = s_addressToPrediction[msg.sender];\n\t\treturn prediction;\n\t}\n\n\tfunction getIntegration() public view returns (uint256) {\n\t\tuint256 integration = s_addressToIntegration[msg.sender];\n\t\treturn integration;\n\t}\n\n\tfunction getPriceFeed() public view returns (AggregatorV3Interface) {\n\t\treturn s_priceFeed;\n\t}\n}"
+    },
+    "contracts/Lock.sol": {
+      "content": "// SPDX-License-Identifier: UNLICENSED\npragma solidity ^0.8.9;\n\n// Uncomment this line to use console.log\n// import \"hardhat/console.sol\";\n\ncontract Lock {\n    uint public unlockTime;\n    address payable public owner;\n\n    event Withdrawal(uint amount, uint when);\n\n    constructor(uint _unlockTime) payable {\n        require(\n            block.timestamp < _unlockTime,\n            \"Unlock time should be in the future\"\n        );\n\n        unlockTime = _unlockTime;\n        owner = payable(msg.sender);\n    }\n\n    function withdraw() public {\n        // Uncomment this line, and the import of \"hardhat/console.sol\", to print a log in your terminal\n        // console.log(\"Unlock time is %o and block timestamp is %o\", unlockTime, block.timestamp);\n\n        require(block.timestamp >= unlockTime, \"You can't withdraw yet\");\n        require(msg.sender == owner, \"You aren't the owner\");\n\n        emit Withdrawal(address(this).balance, block.timestamp);\n\n        owner.transfer(address(this).balance);\n    }\n\n    function test() public returns (uint256) {\n\n        int256 num = -10;\n        return uint256(num);\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
