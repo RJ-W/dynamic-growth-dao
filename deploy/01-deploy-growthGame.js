@@ -26,7 +26,7 @@ module.exports = async ( { getNamedAccounts, deployments, network } ) => {
     log("Deploying growthGame and waiting for confirmations...")
     const growthGame = await deploy("growthGame", {
         from: deployer,
-        args: [ethUsdPriceFeedAddress],
+        args: [ethUsdPriceFeedAddress, 5],
         log: true,
         // we need to wait if on a live network so we can verify properly
         waitConfirmations: network.config.blockConfirmations || 1,
@@ -38,7 +38,7 @@ module.exports = async ( { getNamedAccounts, deployments, network } ) => {
         !developmentChains.includes(network.name) &&
         process.env.ETHERSCAN_API_KEY
     ) {
-        await verify(growthGame.address, [ethUsdPriceFeedAddress])
+        await verify(growthGame.address, [ethUsdPriceFeedAddress, 5])
     }
 
 }

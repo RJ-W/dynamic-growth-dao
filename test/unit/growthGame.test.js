@@ -27,7 +27,8 @@ describe("growthGame", async function () {
         )
     })
 
-    // 🐷 just for the constructor
+    // 🐷 Test for the constructor
+    // 🐷 1.get true address
     describe("constructor", async function () {
         it("sets the aggregator addresses correctly", async () => {
             // 🐷 获取已经用priceFeedAddress初始化的AggregatorV3Interface
@@ -40,6 +41,10 @@ describe("growthGame", async function () {
 
         })
     })
+
+    // 🐷 Test for fund
+    // 🐷 1.value >= fundThreshold
+    // 🐷 2.cal balance correctlly
 
     // 🐷 Error: invalid BigNumber value (argument="value", value={"uplift":5}, code=INVALID_ARGUMENT, version=bignumber/5.7.0)
     describe("predict", async function () {

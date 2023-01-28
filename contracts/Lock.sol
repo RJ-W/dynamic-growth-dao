@@ -32,9 +32,4 @@ contract Lock {
         owner.transfer(address(this).balance);
     }
 
-    function test() public returns (uint256) {
-
-        int256 num = -10;
-        return uint256(num);
-    }
 }
