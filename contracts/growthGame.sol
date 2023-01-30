@@ -5,6 +5,7 @@ pragma solidity ^0.8.9;
 
 // 2.Imports
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "hardhat/console.sol";
 
 // 🐷 初版不复杂 
 // 🐷 1.首先有一个存钱+取钱功能 fund+withdraw
@@ -58,6 +59,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 // 3.Interfaces
 // 4.Libraries
+import "./PriceConverter.sol";
 
 // Errors contractName__errorName
 error GrowthGame__NotOwner();
@@ -74,12 +76,14 @@ error GrowthGame__NotEnoughBalance();
 contract growthGame {
 
 	// 5.1 Type Declarations
+	using PriceConverter for uint256;
+
 	// 5.2 State variables
-	uint256 public constant fundThreshold_USD;
+	uint256 public immutable i_fundThreshold_usd18digit;
 	address private immutable i_owner;
 
 	address payable[] private s_funders;
-	mapping(address => uint256) private s_addressToBalance;
+	mapping(address => uint256) private s_addressToProportion;
 
 	address[] private s_wizards;
 	address[] private s_prophets;
@@ -107,18 +111,10 @@ contract growthGame {
 	constructor(address priceFeedAddress, uint256 fundThreshold) {
 		s_priceFeed = AggregatorV3Interface(priceFeedAddress);
 		i_owner = msg.sender;
-		fundThreshold_USD = fundThreshold * 10**18;
+		i_fundThreshold_usd18digit = fundThreshold * 10**18;
 
 		// 🐷 init currentPrice
 		s_currentPrice = getCurrentPrice(s_priceFeed);
-	}
-
-	receive() external payable {
-		predict(0);
-	}
-
-	fallback() external payable {
-		predict(0);
 	}
 
 	/** 
@@ -127,12 +123,13 @@ contract growthGame {
 	 */
 	function fund() public payable {
 
-		if(msg.value.getConversionRate(s_priceFeed) < fundThreshold_USD) {
+		if(msg.value.getConversionRate(s_priceFeed) < i_fundThreshold_usd18digit) {
 			revert GrowthGame__LessthanFundThreshold();
 		}
 
+		console.log("address(this).balance: ", address(this).balance);
 		s_funders.push(payable(msg.sender));
-		s_addressToProportion[msg.sender] += msg.value;
+		s_addressToProportion[msg.sender] += msg.value / (address(this).balance + msg.value);
 
 		emit fundSuccessfully(
 			msg.sender,
@@ -152,6 +149,7 @@ contract growthGame {
 	 * @notice wizards predict the uplift of successor exchange rate between ETH and USD
 	 * @dev init or update one's prediction
 	 */
+	/*
 	function predict(int256 uplift) public {
 
 		if(!(s_addressToBalance[msg.sender] > 0)) {
@@ -161,11 +159,13 @@ contract growthGame {
 		s_addressToPrediction[msg.sender] = uplift;
 		s_wizards.push(msg.sender);
 	}
+	*/
 
 	/** 
 	 * @notice owner operate the game
 	 * @dev get the latest price, verify all prediction, and record
 	 */
+	/*
 	function verify() public onlyOwner {
 		uint256 latestPrice = getCurrentPrice(s_priceFeed);
 		int256 realUplift = int256(latestPrice - s_currentPrice);
@@ -181,11 +181,13 @@ contract growthGame {
 
 		s_wizards = new address[](0);
 	}
+	*/
 
 	/** 
 	 * @notice cheaper verify with variable in memory
 	 * @dev mappings can't be in memory
 	 */
+	/*
 	function cheaperVerify() public onlyOwner {
 		uint256 latestPrice = getCurrentPrice(s_priceFeed);
 		int256 realUplift = int256(latestPrice - s_currentPrice);
@@ -204,6 +206,7 @@ contract growthGame {
 		s_wizards = new address[](0);
 
 	}
+	*/
 
 	/** 
 	 * @notice prophets will stand out based on the integration records
@@ -235,7 +238,11 @@ contract growthGame {
 	}
 
 	function getFundThreshold() public view returns (uint256) {
-		return i_fundThreshold;
+		return i_fundThreshold_usd18digit / 10**18;
+	}
+
+	function getFunder(uint256 index) public view returns (address) {
+		return s_funders[index];
 	}
 
 	function getCurrentPrice(AggregatorV3Interface priceFeed) internal view returns (uint256) {

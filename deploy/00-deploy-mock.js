@@ -2,12 +2,12 @@ const { developmentChains, DECIMALS, INITIAL_PRICE } = require("../helper-hardha
 
 
 module.exports = async ( { getNamedAccounts, deployments, network } ) => {
-    console.log("Hi!");
+    // console.log("Hi!");
 
     const { deploy, log } = deployments;
     // 🐷 这里的getNamedAccounts 配置在config namedAccounts
     const { deployer } = await getNamedAccounts();
-    console.log(network.config.chainId);
+    // console.log(network.config.chainId);
     const chainId = network.config.chainId;
 
     log(network.name);

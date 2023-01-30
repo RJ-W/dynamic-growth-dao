@@ -29,8 +29,8 @@ describe("growthGame", async function () {
 
     // 🐷 Test for the constructor
     // 🐷 1.get true address
-    describe("constructor", async function () {
-        it("sets the aggregator addresses correctly", async () => {
+    describe("Constructor", function () {
+        it("Should set the aggregator addresses correctly", async () => {
             // 🐷 获取已经用priceFeedAddress初始化的AggregatorV3Interface
             const response = await growthGame.getPriceFeed();
             // 🐷 这里不确定 
@@ -45,8 +45,33 @@ describe("growthGame", async function () {
     // 🐷 Test for fund
     // 🐷 1.value >= fundThreshold
     // 🐷 2.cal balance correctlly
+    describe("Fund", function () {
+        it("Should revert error if not send enough ETH", async () => {
+
+            const fundThreshold = await growthGame.getFundThreshold();
+
+            console.log(fundThreshold); // BigNumber { _hex: '0x1388', _isBigNumber: true }
+            console.log(growthGame.i_fundThreshold_usd18digit); // [Function (anonymous)]
+            console.log("growthGame.getFundThreshold(): ", growthGame.getFundThreshold());
+
+            // await growthGame.fund({ value: 2 });
+            await expect(growthGame.fund({ value: 2 })).to.be.revertedWithCustomError(growthGame, "GrowthGame__LessthanFundThreshold");
+
+        })
+        it("Should add funder to array of funders", async () => {
+
+            await growthGame.fund({ value: 3 });
+            const response = await growthGame.getFunder(0);
+            assert.equal(response, deployer);
+        })
+    })
+
+    // 🐷 Test for withdraw
+    // 🐷 1.user get right amount
+    // 🐷 2.proportion record clean
 
     // 🐷 Error: invalid BigNumber value (argument="value", value={"uplift":5}, code=INVALID_ARGUMENT, version=bignumber/5.7.0)
+    /*
     describe("predict", async function () {
         it("update one's prediction correctly", async () => {
             await growthGame.predict({uplift: predictValue});
@@ -60,7 +85,9 @@ describe("growthGame", async function () {
             assert.equal(response, deployer);
         })
     })
+    */
 
+    /*
     describe("verify", async function (){
         // 🐷 before verify, we need some prediction
         beforeEach(async function () {
@@ -79,4 +106,5 @@ describe("growthGame", async function () {
 
         })
     })
+    */
 })

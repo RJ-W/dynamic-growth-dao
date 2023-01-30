@@ -3,11 +3,11 @@ const { verify } = require("../utils/verify")
 require("dotenv").config()
 
 module.exports = async ( { getNamedAccounts, deployments, network } ) => {
-    console.log("Hi!");
+    // console.log("Hi!");
 
     const { deploy, log } = deployments;
     const { deployer } = await getNamedAccounts();
-    console.log(network.config.chainId);
+    // console.log(network.config.chainId);
     const chainId = network.config.chainId;
 
     // when we use chainlink in mainnet or testnet, we get priceFeedAddress from https://docs.chain.link/data-feeds/price-feeds/addresses
@@ -26,7 +26,7 @@ module.exports = async ( { getNamedAccounts, deployments, network } ) => {
     log("Deploying growthGame and waiting for confirmations...")
     const growthGame = await deploy("growthGame", {
         from: deployer,
-        args: [ethUsdPriceFeedAddress, 5],
+        args: [ethUsdPriceFeedAddress, 5000],
         log: true,
         // we need to wait if on a live network so we can verify properly
         waitConfirmations: network.config.blockConfirmations || 1,
