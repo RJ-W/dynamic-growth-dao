@@ -39,7 +39,13 @@ import "hardhat/console.sol";
 		// 🐷 13:00时 经验证 真实-$2 给wizards打分 总资产保持$1006
 	// 🐷 分红: 考虑以占比形式计算 每次交易同比例涨跌
 		// 🐷 仅用户存钱+取钱时计算
-		// 🐷 存钱时 个人balance += 存入fund/(存入fund+现有fund)
+		// 🐷 存钱时 个人new proportion = 存入fund/(存入fund+现有fund)
+			// 🐷 先更新当前全量funder资产占比
+			// 🐷 再将“新资产占比”加到对应账户中
+			// 🐷 资产的两种变化: 交易变化 资金池变化
+				// 🐷 交易变化: 根据每次交易盈亏比例 更新各个funder资产
+				// 🐷 资金池变化: 仅记录各funder资金占比 加入/撤出时 按占比计算
+			// 🐷 考虑到后期交易会逐渐复杂 选择用“资金池变化”计算
 		// 🐷 以占总fund比例存在
 		// 🐷 取钱时 按该比例提款 
 
@@ -79,10 +85,13 @@ contract growthGame {
 	using PriceConverter for uint256;
 
 	// 5.2 State variables
+	// i_ immutable
+	// s_ storage
 	uint256 public immutable i_fundThreshold_usd18digit;
 	address private immutable i_owner;
 
-	address payable[] private s_funders;
+	// address payable[] private s_funders;
+	mapping(address => bool) private s_fundersExist;
 	mapping(address => uint256) private s_addressToProportion;
 
 	address[] private s_wizards;
@@ -123,13 +132,23 @@ contract growthGame {
 	 */
 	function fund() public payable {
 
+		// 🐷 verify qualification
 		if(msg.value.getConversionRate(s_priceFeed) < i_fundThreshold_usd18digit) {
 			revert GrowthGame__LessthanFundThreshold();
 		}
 
+		// 🐷 add to name list
 		console.log("address(this).balance: ", address(this).balance);
-		s_funders.push(payable(msg.sender));
-		s_addressToProportion[msg.sender] += msg.value / (address(this).balance + msg.value);
+		// s_funders.push(payable(msg.sender));
+		s_fundersExist[msg.sender] = true;
+
+		// 🐷 update account
+		// update all former account
+		uint formerBalance = address(this).balance;
+		
+
+		// 🐷 add new proportion
+		s_addressToProportion[msg.sender] += msg.value / (formerBalance + msg.value);
 
 		emit fundSuccessfully(
 			msg.sender,
@@ -241,8 +260,8 @@ contract growthGame {
 		return i_fundThreshold_usd18digit / 10**18;
 	}
 
-	function getFunder(uint256 index) public view returns (address) {
-		return s_funders[index];
+	function getFunderExist(address _address) public view returns (bool) {
+		return s_fundersExist[_address];
 	}
 
 	function getCurrentPrice(AggregatorV3Interface priceFeed) internal view returns (uint256) {

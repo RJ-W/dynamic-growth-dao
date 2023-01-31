@@ -2,19 +2,19 @@ const { developmentChains, DECIMALS, INITIAL_PRICE } = require("../helper-hardha
 
 
 module.exports = async ( { getNamedAccounts, deployments, network } ) => {
-    // console.log("Hi!");
+    // console.log("Hi!")
 
-    const { deploy, log } = deployments;
+    const { deploy, log } = deployments
     // 🐷 这里的getNamedAccounts 配置在config namedAccounts
-    const { deployer } = await getNamedAccounts();
-    // console.log(network.config.chainId);
-    const chainId = network.config.chainId;
+    const { deployer } = await getNamedAccounts()
+    // console.log(network.config.chainId)
+    const chainId = network.config.chainId
 
-    log(network.name);
+    log(network.name)
 
     // 🐷 首先判断是否需要做mock
     if (developmentChains.includes(network.name)) {
-        log("Hardhat or localhost detected! Deploying mock...");
+        log("Hardhat or localhost detected! Deploying mock...")
 
         await deploy("MockV3Aggregator", {
             // 🐷 contract 好像是可写可不写
@@ -25,11 +25,9 @@ module.exports = async ( { getNamedAccounts, deployments, network } ) => {
             args: [DECIMALS, INITIAL_PRICE],
         })
 
-        log("Mock deployed!");
-        log("----------------------------------------------------");
+        log("Mock deployed!")
+        log("----------------------------------------------------")
     }
-
-    log("~");
 
 }
 
