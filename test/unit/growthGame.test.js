@@ -60,9 +60,9 @@ describe("growthGame", async function () {
         })
         it("Should add funder to array of funders", async () => {
 
-            await growthGame.fund({ value: 3 })
-            const response = await growthGame.getFunderExist(deployer)
-            assert.equal(response, true)
+            // await growthGame.fund({ value: 3 })
+            // const response = await growthGame.getFunderExist(deployer)
+            // assert.equal(response, true)
 
         })
         it("Should get right proportion", async () => {

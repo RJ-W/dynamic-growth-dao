@@ -90,16 +90,25 @@ contract growthGame {
 	uint256 public immutable i_fundThreshold_usd18digit;
 	address private immutable i_owner;
 
-	// address payable[] private s_funders;
-	mapping(address => bool) private s_fundersExist;
-	mapping(address => uint256) private s_addressToProportion;
+	struct FunderStruct {
+		// 🐷 退出时 proportion置0 score长期保留 O(1)删除List中记录 维持List大小 控制遍历成本
+		uint256 proportion; 	// 🐷 资产占比
+		uint256 score; 			// 🐷 预测积分
+		uint256 listPointer;	// 🐷 列表指针
+		// 🐷 新用户 无对应listPointer
+		// 🐷 下线用户 Structs与List中的address不相等
+		// 🐷 在线用户 Structs与List中的address相等
+	}
 
-	address[] private s_wizards;
-	address[] private s_prophets;
+	address payable[] private s_fundersList;
+	mapping(address => FunderStruct) private s_funderStructs;
 
-	uint256 private s_currentPrice;
-	mapping(address => int256) private s_addressToPrediction;
-	mapping(address => uint256) private s_addressToIntegration;
+	// address[] private s_wizards;
+	// address[] private s_prophets;
+
+	// uint256 private s_currentPrice;
+	// mapping(address => int256) private s_addressToPrediction;
+	// mapping(address => uint256) private s_addressToIntegration;
 	AggregatorV3Interface private s_priceFeed;
 
 	// 5.3 Events
@@ -123,7 +132,13 @@ contract growthGame {
 		i_fundThreshold_usd18digit = fundThreshold * 10**18;
 
 		// 🐷 init currentPrice
-		s_currentPrice = getCurrentPrice(s_priceFeed);
+		// s_currentPrice = getCurrentPrice(s_priceFeed);
+	}
+
+
+	function isFunder(address funderAddress) private returns(bool isIndeed) {
+		if(s_fundersList.length == 0) return false;
+		return(s_fundersList[s_funderStructs[funderAddress].listPointer] == funderAddress);
 	}
 
 	/** 
@@ -137,18 +152,25 @@ contract growthGame {
 			revert GrowthGame__LessthanFundThreshold();
 		}
 
-		// 🐷 add to name list
 		console.log("address(this).balance: ", address(this).balance);
 		// s_funders.push(payable(msg.sender));
-		s_fundersExist[msg.sender] = true;
+		// s_fundersExist[msg.sender] = true;
 
-		// 🐷 update account
+		// 🐷 add to List and Structs
+		// 1.已经在线 追加资产 仅更新Structs
+		// 2.下线状态 添加资产 加入List + 更新Structs
+		// 3.新用户 加入List + 加入Structs
+		if(!isFunder(msg.sender)) {
+			
+		}
+		
+
+		// 🐷 update proportion
 		// update all former account
 		uint formerBalance = address(this).balance;
 		
-
 		// 🐷 add new proportion
-		s_addressToProportion[msg.sender] += msg.value / (formerBalance + msg.value);
+		// s_addressToProportion[msg.sender] += msg.value / (formerBalance + msg.value);
 
 		emit fundSuccessfully(
 			msg.sender,
